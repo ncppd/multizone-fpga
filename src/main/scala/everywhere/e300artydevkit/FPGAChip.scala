@@ -12,7 +12,7 @@ import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.spi._
 
 import sifive.fpgashells.shell.xilinx.artyshell.{ArtyShell}
-import sifive.fpgashells.ip.xilinx.{IBUFG, IOBUF, PULLUP, PowerOnResetFPGAOnly}
+import sifive.fpgashells.ip.xilinx.{IBUFG, IBUF, IOBUF, PULLUP, PowerOnResetFPGAOnly}
 
 //-------------------------------------------------------------------------
 // E300ArtyDevKitFPGAChip
@@ -33,12 +33,34 @@ class E300ArtyDevKitFPGAChip(implicit override val p: Parameters) extends ArtySh
     slow_clock := clockToggleReg
   }
 
-  //-----------------------------------------------------------------------
-  // DUT
-  //-----------------------------------------------------------------------
-
   withClockAndReset(clock_32MHz, ck_rst) {
+    //-----------------------------------------------------------------------
+    // DUT
+    //-----------------------------------------------------------------------
     val dut = Module(new E300ArtyDevKitPlatform)
+
+    //---------------------------------------------------------------------
+    // PHY IOBUFs
+    //---------------------------------------------------------------------
+
+    IOBUF(eth_tx_clk, dut.io.pins.phy.phy_tx_clk)
+    IOBUF(eth_rx_clk, dut.io.pins.phy.phy_rx_clk)
+    IOBUF(eth_txd(0), dut.io.pins.phy.phy_tx_data(0))
+    IOBUF(eth_txd(1), dut.io.pins.phy.phy_tx_data(1))
+    IOBUF(eth_txd(2), dut.io.pins.phy.phy_tx_data(2))
+    IOBUF(eth_txd(3), dut.io.pins.phy.phy_tx_data(3))
+    IOBUF(eth_rxd(0), dut.io.pins.phy.phy_rx_data(0))
+    IOBUF(eth_rxd(1), dut.io.pins.phy.phy_rx_data(1))
+    IOBUF(eth_rxd(2), dut.io.pins.phy.phy_rx_data(2))
+    IOBUF(eth_rxd(3), dut.io.pins.phy.phy_rx_data(3))
+    IOBUF(eth_rx_dv,  dut.io.pins.phy.phy_dv)
+    IOBUF(eth_rxerr,  dut.io.pins.phy.phy_rx_er)
+    IOBUF(eth_tx_en,  dut.io.pins.phy.phy_tx_en)
+    IOBUF(eth_crs,    dut.io.pins.phy.phy_crs)
+    IOBUF(eth_col,    dut.io.pins.phy.phy_col)
+    IOBUF(eth_mdc,    dut.io.pins.phy.phy_mdc)
+    IOBUF(eth_mdio,   dut.io.pins.phy.phy_mdio)
+    IOBUF(eth_rstn,   dut.io.pins.phy.phy_rst_n)
 
     //---------------------------------------------------------------------
     // SPI flash IOBUFs

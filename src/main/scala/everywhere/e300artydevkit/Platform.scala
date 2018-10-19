@@ -8,6 +8,8 @@ import freechips.rocketchip.subsystem._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.amba.axi4._
+import freechips.rocketchip.util.HeterogeneousBag
 import freechips.rocketchip.util.ResetCatchAndSync
 import freechips.rocketchip.system._
 
@@ -20,6 +22,8 @@ import sifive.blocks.devices.uart._
 import sifive.blocks.devices.i2c._
 import sifive.blocks.devices.pinctrl._
 
+import sifive.fpgashells.ip.xilinx.ethernetlite.{PhyPort, MdioPort}
+
 //-------------------------------------------------------------------------
 // PinGen
 //-------------------------------------------------------------------------
@@ -29,6 +33,21 @@ object PinGen {
     val pin = new BasePin()
     pin
   }
+}
+
+class PhyPins[T <: Pin](pingen: () => T) extends Bundle {
+  val phy_tx_clk  = pingen()
+  val phy_rx_clk  = pingen()
+  val phy_rx_data = Vec(4, pingen())
+  val phy_tx_data = Vec(4, pingen())
+  val phy_dv      = pingen()
+  val phy_rx_er   = pingen()
+  val phy_tx_en   = pingen()
+  val phy_crs     = pingen()
+  val phy_col     = pingen()
+  val phy_rst_n   = pingen()
+  val phy_mdc     = pingen()
+  val phy_mdio    = pingen()
 }
 
 //-------------------------------------------------------------------------
@@ -41,6 +60,7 @@ class E300ArtyDevKitPlatformIO(implicit val p: Parameters) extends Bundle {
     val gpio = new GPIOPins(() => PinGen(), p(PeripheryGPIOKey)(0))
     val qspi = new SPIPins(() => PinGen(), p(PeripherySPIFlashKey)(0))
     val aon = new MockAONWrapperPins()
+    val phy = new PhyPins(() => PinGen())
   }
   val jtag_reset = Bool(INPUT)
   val ndreset    = Bool(OUTPUT)
@@ -51,7 +71,8 @@ class E300ArtyDevKitPlatformIO(implicit val p: Parameters) extends Bundle {
 //-------------------------------------------------------------------------
 
 class E300ArtyDevKitPlatform(implicit val p: Parameters) extends Module {
-  val sys = Module(LazyModule(new E300ArtyDevKitSystem).module)
+  val interface = new E300ArtyDevKitSystem
+  val sys = Module(LazyModule(interface).module)
   val io = new E300ArtyDevKitPlatformIO
 
   // This needs to be de-asserted synchronously to the coreClk.
@@ -76,6 +97,30 @@ class E300ArtyDevKitPlatform(implicit val p: Parameters) extends Module {
   val sys_pwm  = sys.pwm
   val sys_spi  = sys.spi
   val sys_i2c  = sys.i2c
+  val sys_phy  = sys.phy
+
+  sys_phy.phy_tx_clk  := io.pins.phy.phy_tx_clk.inputPin().asClock
+  sys_phy.phy_rx_clk  := io.pins.phy.phy_rx_clk.inputPin().asClock
+  sys_phy.phy_rx_data := io.pins.phy.phy_rx_data(3).inputPin() ##
+                         io.pins.phy.phy_rx_data(2).inputPin() ##
+                         io.pins.phy.phy_rx_data(1).inputPin() ##
+                         io.pins.phy.phy_rx_data(0).inputPin()
+  sys_phy.phy_dv      := io.pins.phy.phy_dv.inputPin()
+  sys_phy.phy_rx_er   := io.pins.phy.phy_rx_er.inputPin()
+  sys_phy.phy_crs     := io.pins.phy.phy_crs.inputPin()
+  sys_phy.phy_col     := io.pins.phy.phy_col.inputPin()
+  io.pins.phy.phy_tx_data(3).outputPin(sys_phy.phy_tx_data(3))
+  io.pins.phy.phy_tx_data(2).outputPin(sys_phy.phy_tx_data(2))
+  io.pins.phy.phy_tx_data(1).outputPin(sys_phy.phy_tx_data(1))
+  io.pins.phy.phy_tx_data(0).outputPin(sys_phy.phy_tx_data(0))
+  io.pins.phy.phy_tx_en.outputPin(sys_phy.phy_tx_en)
+  io.pins.phy.phy_rst_n.outputPin(sys_phy.phy_rst_n)
+  io.pins.phy.phy_mdc.outputPin(sys_phy.phy_mdc)
+
+  sys_phy.phy_mdio_i := io.pins.phy.phy_mdio.i.ival
+  io.pins.phy.phy_mdio.o.oval := sys_phy.phy_mdio_o
+  io.pins.phy.phy_mdio.o.oe := ~sys_phy.phy_mdio_t
+  io.pins.phy.phy_mdio.o.ie := sys_phy.phy_mdio_t
 
   val uart_pins = p(PeripheryUARTKey).map { c => Wire(new UARTPins(() => PinGen()))}
   val pwm_pins  = p(PeripheryPWMKey).map  { c => Wire(new PWMPins(() => PinGen(), c))}

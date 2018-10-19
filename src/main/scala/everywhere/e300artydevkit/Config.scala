@@ -21,7 +21,12 @@ class DefaultFreedomEConfig extends Config (
   new WithNBreakpoints(2)        ++
   new WithNExtTopInterrupts(0)   ++
   new WithJtagDTM                ++
-  new TinyConfig
+  new WithNoMemPort              ++
+  new WithNoMMIOPort             ++
+  new WithNMemoryChannels(0)     ++
+  new WithNBanks(0)              ++
+  new With1TinyCore              ++
+  new BaseConfig
 )
 
 // Freedom E300 Arty Dev Kit Peripherals
