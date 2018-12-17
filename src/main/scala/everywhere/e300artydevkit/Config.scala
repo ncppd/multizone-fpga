@@ -25,6 +25,8 @@ class DefaultFreedomEConfig extends Config (
   new WithNoMMIOPort             ++
   new WithNMemoryChannels(0)     ++
   new WithNBanks(0)              ++
+  new WithL1ICacheWays(2)        ++
+  new WithL1DCacheSets(1024)     ++
   new With1TinyCore              ++
   new BaseConfig
 )
