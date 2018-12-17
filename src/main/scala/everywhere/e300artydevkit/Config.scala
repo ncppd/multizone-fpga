@@ -16,6 +16,12 @@ import sifive.blocks.devices.spi._
 import sifive.blocks.devices.uart._
 import sifive.blocks.devices.i2c._
 
+class WithITIMAddr(addr: BigInt) extends Config((site, here, up) =>
+{
+  case RocketTilesKey => up(RocketTilesKey, site) map { r =>
+    r.copy(icache = r.icache.map(_.copy(itimAddr = Some(addr)))) }
+})
+
 // Default FreedomEConfig
 class DefaultFreedomEConfig extends Config (
   new WithNBreakpoints(2)        ++
@@ -27,6 +33,7 @@ class DefaultFreedomEConfig extends Config (
   new WithNBanks(0)              ++
   new WithL1ICacheWays(2)        ++
   new WithL1DCacheSets(1024)     ++
+  new WithITIMAddr(0x08000000)   ++
   new With1TinyCore              ++
   new BaseConfig
 )
