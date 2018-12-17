@@ -33,7 +33,7 @@ class E300ArtyDevKitFPGAChip(implicit override val p: Parameters) extends ArtySh
     slow_clock := clockToggleReg
   }
 
-  withClockAndReset(clock_32MHz, ck_rst) {
+  withClockAndReset(clock_65MHz, ck_rst) {
     //-----------------------------------------------------------------------
     // DUT
     //-----------------------------------------------------------------------
@@ -93,7 +93,7 @@ class E300ArtyDevKitFPGAChip(implicit override val p: Parameters) extends ArtySh
     PULLUP(jd_6)
 
     // jtag reset
-    val jtag_power_on_reset = PowerOnResetFPGAOnly(clock_32MHz)
+    val jtag_power_on_reset = PowerOnResetFPGAOnly(clock_65MHz)
     dut.io.jtag_reset := jtag_power_on_reset
 
     // debug reset
