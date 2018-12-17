@@ -22,6 +22,12 @@ class WithITIMAddr(addr: BigInt) extends Config((site, here, up) =>
     r.copy(icache = r.icache.map(_.copy(itimAddr = Some(addr)))) }
 })
 
+class WithUserMode() extends Config((site, here, up) =>
+{
+  case RocketTilesKey => up(RocketTilesKey, site) map { r =>
+    r.copy(core = r.core.copy(useUser = true)) }
+})
+
 // Default FreedomEConfig
 class DefaultFreedomEConfig extends Config (
   new WithNBreakpoints(2)        ++
@@ -33,6 +39,7 @@ class DefaultFreedomEConfig extends Config (
   new WithNBanks(0)              ++
   new WithL1ICacheWays(2)        ++
   new WithL1DCacheSets(1024)     ++
+  new WithUserMode               ++
   new WithITIMAddr(0x08000000)   ++
   new With1TinyCore              ++
   new BaseConfig
