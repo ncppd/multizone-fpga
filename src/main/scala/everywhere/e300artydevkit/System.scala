@@ -8,6 +8,7 @@ import freechips.rocketchip.subsystem._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.interrupts._
 import freechips.rocketchip.system._
 
 import sifive.blocks.devices.mockaon._
@@ -30,11 +31,19 @@ class E300ArtyDevKitSystem(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryUART
     with HasPeripherySPIFlash
     with HasPeripherySPI
-    with HasPeripheryGPIO
     with HasPeripheryPWM
     with HasPeripheryI2C
-    with HasSystemXilinxEthernetLite {
+    with HasSystemXilinxEthernetLite
+    with HasLocalExtInterrupts {
   override lazy val module = new E300ArtyDevKitSystemModule(this)
+
+  val gpio = p(PeripheryGPIOKey).map { ps =>
+    GPIO.attach(GPIOAttachParams(ps, pbus, ibus.fromAsync))
+  }
+
+  val gpioNodes = gpio.map { g =>
+    g.ioNode.makeSink
+  }
 }
 
 class E300ArtyDevKitSystemModule[+L <: E300ArtyDevKitSystem](_outer: L)
@@ -42,7 +51,6 @@ class E300ArtyDevKitSystemModule[+L <: E300ArtyDevKitSystem](_outer: L)
     with HasPeripheryDebugModuleImp
     with HasPeripheryUARTModuleImp
     with HasPeripherySPIModuleImp
-    with HasPeripheryGPIOModuleImp
     with HasPeripherySPIFlashModuleImp
     with HasPeripheryMockAONModuleImp
     with HasPeripheryPWMModuleImp
@@ -51,4 +59,12 @@ class E300ArtyDevKitSystemModule[+L <: E300ArtyDevKitSystem](_outer: L)
   // Reset vector is set to the location of the mask rom
   val maskROMParams = p(PeripheryMaskROMKey)
   global_reset_vector := maskROMParams(0).address.U
+
+  val gpio = outer.gpioNodes.zipWithIndex.map { case(n,i) => n.makeIO()(ValName(s"gpio_$i")) }
+
+  outer.localExtInterrupts.out.map(_._1).flatten.zipWithIndex.foreach {
+    case(o, 0) => o := outer.gpio(0).module.lip(15)
+    case(o, 1) => o := outer.gpio(0).module.lip(30)
+    case(o, 2) => o := outer.gpio(0).module.lip(31)
+  }
 }
