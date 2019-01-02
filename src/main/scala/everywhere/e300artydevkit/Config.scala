@@ -28,6 +28,14 @@ class WithUserMode() extends Config((site, here, up) =>
     r.copy(core = r.core.copy(useUser = true)) }
 })
 
+class WithLocalInterrupts(nLocalInterrupts: Int) extends Config((site, here, up) =>
+{
+  case RocketTilesKey => up(RocketTilesKey, site) map { r =>
+    r.copy(core = r.core.copy(nLocalInterrupts = nLocalInterrupts)) }
+
+  case NLocalExtInterrupts => nLocalInterrupts
+})
+
 // Default FreedomEConfig
 class DefaultFreedomEConfig extends Config (
   new WithNBreakpoints(8)        ++
@@ -41,6 +49,7 @@ class DefaultFreedomEConfig extends Config (
   new WithL1DCacheSets(1024)     ++
   new WithUserMode               ++
   new WithITIMAddr(0x08000000)   ++
+  new WithLocalInterrupts(3)     ++
   new With1TinyCore              ++
   new BaseConfig
 )
