@@ -30,7 +30,7 @@ class WithUserMode() extends Config((site, here, up) =>
 
 // Default FreedomEConfig
 class DefaultFreedomEConfig extends Config (
-  new WithNBreakpoints(2)        ++
+  new WithNBreakpoints(8)        ++
   new WithNExtTopInterrupts(0)   ++
   new WithJtagDTM                ++
   new WithNoMemPort              ++
