@@ -145,13 +145,14 @@ class E300ArtyDevKitFPGAChip(implicit override val p: Parameters) extends ArtySh
 
     dut.io.pins.gpio.pins(6).i.ival  := 0.U
     dut.io.pins.gpio.pins(7).i.ival  := 0.U
-    dut.io.pins.gpio.pins(8).i.ival  := 0.U
+
+    IOBUF(ja_0, dut.io.pins.gpio.pins(8))
+    IOBUF(ja_1, dut.io.pins.gpio.pins(9))
+    IOBUF(ja_2, dut.io.pins.gpio.pins(10))
+    IOBUF(ja_3, dut.io.pins.gpio.pins(11))
 
     // Header row 3: A0-A5 (we don't support using them as analog inputs)
     // just treat them as regular digital GPIOs
-    IOBUF(ck_io(15), dut.io.pins.gpio.pins(9))  // A1 = CS(2)
-    IOBUF(ck_io(16), dut.io.pins.gpio.pins(10)) // A2 = CS(3) / PWM2(0)
-    IOBUF(ck_io(17), dut.io.pins.gpio.pins(11)) // A3 = PWM2(1)
     IOBUF(ck_io(18), dut.io.pins.gpio.pins(12)) // A4 = PWM2(2) / SDA
     IOBUF(ck_io(19), dut.io.pins.gpio.pins(13)) // A5 = PWM2(3) / SCL
 
@@ -168,7 +169,6 @@ class E300ArtyDevKitFPGAChip(implicit override val p: Parameters) extends ArtySh
     IOBUF(led1_b, dut.io.pins.gpio.pins(22))
 
     // and RGB LED2 R,G,B inputs = PWM2(1,2,3) when iof_1 is active
-    IOBUF(led2_r, dut.io.pins.gpio.pins(11))
     IOBUF(led2_g, dut.io.pins.gpio.pins(12))
     IOBUF(led2_b, dut.io.pins.gpio.pins(13))
 
@@ -185,10 +185,6 @@ class E300ArtyDevKitFPGAChip(implicit override val p: Parameters) extends ArtySh
     iobuf_btn_3.io.T := ~dut.io.pins.aon.pmu.dwakeup_n.o.oe
     attach(btn_3, iobuf_btn_3.io.IO)
     dut.io.pins.aon.pmu.dwakeup_n.i.ival := ~iobuf_btn_3.io.O & dut.io.pins.aon.pmu.dwakeup_n.o.ie
-
-    // UART1 RX/TX pins are assigned to PMOD_D connector pins 0/1
-    IOBUF(ja_0, dut.io.pins.gpio.pins(25)) // UART1 TX
-    IOBUF(ja_1, dut.io.pins.gpio.pins(24)) // UART1 RX
 
     // SPI2 pins mapped to 6 pin ICSP connector (standard on later
     // arduinos) These are connected to some extra GPIO pins not connected
